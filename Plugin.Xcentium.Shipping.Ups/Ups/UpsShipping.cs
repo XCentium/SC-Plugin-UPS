@@ -7,7 +7,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using CommerceServer.Core.Catalog;
 using Newtonsoft.Json;
 using Sitecore.Commerce.Core;
 using Sitecore.Commerce.Plugin.Carts;
@@ -58,18 +57,19 @@ namespace Plugin.Xcentium.Shipping.Ups.Ups
         {
             var input = new UpsReqestInput();
             UpsClientPolicy = context.GetPolicy<UpsClientPolicy>();
-            if (cart != null && cart.Lines.Any<CartLineComponent>() && cart.HasComponent<PhysicalFulfillmentComponent>())
+            if (cart != null && cart.Lines.Any<CartLineComponent>() &&
+                cart.HasComponent<PhysicalFulfillmentComponent>())
             {
                 var component = cart.GetComponent<PhysicalFulfillmentComponent>();
 
                 var shippingParty = component?.ShippingParty;
 
-                input.AddressLine1 = shippingParty.Address1;
-                input.AddressLine2 = shippingParty.Address2;
-                input.City = shippingParty.City;
-                input.CountryCode = shippingParty.CountryCode;
-                input.StateCode = shippingParty.StateCode;
-                input.ZipPostalCode = shippingParty.ZipPostalCode;
+                input.AddressLine1 = shippingParty?.Address1;
+                input.AddressLine2 = shippingParty?.Address2;
+                input.City = shippingParty?.City;
+                input.CountryCode = shippingParty?.CountryCode;
+                input.StateCode = shippingParty?.StateCode;
+                input.ZipPostalCode = shippingParty?.ZipPostalCode;
 
                 input.PriceValue = cart.Totals.SubTotal.Amount;
 
@@ -85,34 +85,18 @@ namespace Plugin.Xcentium.Shipping.Ups.Ups
                     var productArgument = ProductArgument.FromItemId(cartLineComponent.ItemId);
                     if (!productArgument.IsValid()) continue;
                     var sellableItem = getSellableItemPipeline.Run(productArgument, context).Result;
-                    var product = context.CommerceContext.Objects.OfType<Product>().FirstOrDefault<Product>((Product p) => p.ProductId.Equals(sellableItem.FriendlyId, StringComparison.OrdinalIgnoreCase));
-                    decimal val = 0m;
-                    if (product != null)
+
+                    if (sellableItem != null &&  sellableItem.HasComponent<ItemSpecificationsComponent>())
                     {
-                        if (product.HasProperty(UpsClientPolicy.WeightFieldName) && product[UpsClientPolicy.WeightFieldName].ToString().Trim() != "")
-                            val = GetFirstDecimalFromString(product[UpsClientPolicy.WeightFieldName].ToString());
-                        else val = GetFirstDecimalFromString(UpsClientPolicy.Weight);
+                        var itemSpec = sellableItem.GetComponent<ItemSpecificationsComponent>();
 
-                        if (val > 0) weight += val;
+                        if (itemSpec.Weight > 0) weight += itemSpec.Weight;
 
-                        val = product.HasProperty(UpsClientPolicy.HeightFieldName) && product[UpsClientPolicy.HeightFieldName].ToString().Trim() != ""
-                            ? GetFirstDecimalFromString(product[UpsClientPolicy.HeightFieldName].ToString())
-                            : GetFirstDecimalFromString(UpsClientPolicy.Height);
+                        if (itemSpec.Height > 0) height += itemSpec.Height;
 
-                        if (val > 0) height += val;
+                        if (itemSpec.Width > 0 && itemSpec.Width > width) width = itemSpec.Width;
 
-                        val = product.HasProperty(UpsClientPolicy.WidthFieldName) && product[UpsClientPolicy.WidthFieldName].ToString().Trim() != ""
-                            ? GetFirstDecimalFromString(product[UpsClientPolicy.WidthFieldName].ToString())
-                            : GetFirstDecimalFromString(UpsClientPolicy.Width);
-
-                        if (val > 0 && val > width) width = val;
-
-                        val = product.HasProperty(UpsClientPolicy.LengthFieldName) && product[UpsClientPolicy.LengthFieldName].ToString().Trim() != ""
-                            ? GetFirstDecimalFromString(product[UpsClientPolicy.LengthFieldName].ToString())
-                            : GetFirstDecimalFromString(UpsClientPolicy.Length);
-
-                        if (val > 0 && val > length) length = val;
-
+                        if (itemSpec.Length > 0 && itemSpec.Length > length) length = itemSpec.Length;
                     }
 
                 }
@@ -124,10 +108,7 @@ namespace Plugin.Xcentium.Shipping.Ups.Ups
 
             }
 
-            var rates = new List<KeyValuePair<string, decimal>>();
-
-            rates = GetShippingRates(input, context);
-
+            var rates = GetShippingRates(input, context);
 
             return rates;
         }
@@ -179,8 +160,6 @@ namespace Plugin.Xcentium.Shipping.Ups.Ups
                 Name = UpsClientPolicy.ShipperName,
                 ShipperNumber = UpsClientPolicy.ShipperNumber,
                 Address = shipperAddress
-
-
             };
 
             var shipToAddress = new
@@ -311,19 +290,17 @@ namespace Plugin.Xcentium.Shipping.Ups.Ups
                     var response = client.PutAsync(uri, stringContent).Result;
                     var responseString = response.Content.ReadAsStringAsync().Result;
 
-                    var responsList = new UspsResponse();
                     if (!string.IsNullOrEmpty(responseString))
                     {
                         try
                         {
-                            responsList = JsonConvert.DeserializeObject<UspsResponse>(responseString);
-                            if (responsList != null && responsList.RateResponse !=null)
+                            var responsList = JsonConvert.DeserializeObject<UspsResponse>(responseString);
+                            if (responsList?.RateResponse != null)
                             {
                                 var responseCode = responsList.RateResponse.RatedShipment.Service.Code;
                                 responseCode = ShippingCodeConstant.Method[responseCode];
-                                decimal totalChage = 0m;
                                 decimal.TryParse(responsList.RateResponse.RatedShipment.TotalCharges.MonetaryValue,
-                                    out totalChage);
+                                    out var totalChage);
                                 rates.Add(new KeyValuePair<string, decimal>(responseCode, totalChage));
                             }
                         }
@@ -345,24 +322,6 @@ namespace Plugin.Xcentium.Shipping.Ups.Ups
 
             return rates;
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="str"></param>
-        /// <returns></returns>
-        public static decimal GetFirstDecimalFromString(string str)
-        {
-            if (string.IsNullOrEmpty(str)) return 0.00M;
-            var decList = Regex.Split(str, @"[^0-9\.]+").Where(c => c != "." && c.Trim() != "").ToList();
-            var decimalVal = decList.Any() ? decList.FirstOrDefault() : string.Empty;
-
-            if (string.IsNullOrEmpty(decimalVal)) return 0.00M;
-            decimal decimalResult = 0;
-            decimal.TryParse(decimalVal, out decimalResult);
-            return decimalResult;
-        }
-
 
     }
 }

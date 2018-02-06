@@ -61,61 +61,6 @@ namespace Plugin.Xcentium.Shipping.Ups
             this.Height = "2";
             this.Weight = "0.2";
 
-            ////
-            //// Fedex Keys
-            //this.Username = string.Empty;
-            //this.Password = string.Empty;
-            //this.Url = string.Empty;
-            //this.AccessLicenseNumber = string.Empty;
-            //this.CustomerContext = string.Empty;
-            //this.ServiceCode = string.Empty;
-
-            //// Other settings
-            //this.RequestOption = string.Empty;
-            //this.ServiceDescription = string.Empty;
-            //this.PackageTypeDescription = string.Empty;
-            //this.NegotiatedRatesIndicator = string.Empty;
-            //this.CompensationMultipier = 1m;
-
-            //// Shipper settings
-            //this.ShipperName = string.Empty;
-            //this.ShipperNumber = string.Empty;
-            //this.ShipperAddressLine1 = string.Empty;
-            //this.ShipperAddressLine2 = string.Empty;
-            //this.ShipperAddressLine3 = string.Empty;
-            //this.ShipperCity = string.Empty;
-            //this.ShipperStateOrProvinceCode = string.Empty;
-            //this.ShipperPostalCode = string.Empty;
-            //this.ShipperCountryCode = string.Empty;
-
-            //// ship from settings
-            //this.ShipFromName = string.Empty;
-            //this.ShipFromAddressLine1 = string.Empty;
-            //this.ShipFromAddressLine2 = string.Empty;
-            //this.ShipFromAddressLine3 = string.Empty;
-            //this.ShipFromCity = string.Empty;
-            //this.ShipFromStateOrProvinceCode = string.Empty;
-            //this.ShipFromPostalCode = string.Empty;
-            //this.ShipFromCountryCode = string.Empty;
-
-            //// Package settings
-            //this.PackageType = string.Empty;
-            //this.DimensionsUnitOfMeasureCode = string.Empty;
-            //this.DimensionsUnitOfMeasureDescription = string.Empty;
-            //this.PackageWeightUnitOfMeasurementCode = string.Empty;
-            //this.PackageWeightUnitOfMeasurementDescription = string.Empty;
-
-            //this.Length = string.Empty;
-            //this.Width = string.Empty;
-            //this.Height = string.Empty;
-            //this.Weight = string.Empty;
-            ////
-
-            this.WeightFieldName = "Weight";
-            this.LengthFieldName = "Length";
-            this.WidthFieldName = "Width";
-            this.HeightFieldName = "Height";
-
         }
 
         /// <summary>
@@ -284,26 +229,6 @@ namespace Plugin.Xcentium.Shipping.Ups
         /// This multiplies the cart total with an inconvenience factor incase postage needs compensation paid out.
         /// </summary>
         public decimal CompensationMultipier { get; set; }
-
-        /// <summary>
-        /// Weight field name in Sitecore
-        /// </summary>
-        public string WeightFieldName { get; set; }
-
-        /// <summary>
-        /// Lenght field name in Sitecore
-        /// </summary>
-        public string LengthFieldName { get; set; }
-
-        /// <summary>
-        /// Width field name in Sitecore
-        /// </summary>
-        public string WidthFieldName { get; set; }
-
-        /// <summary>
-        /// Height field name in Sitecore
-        /// </summary>
-        public string HeightFieldName { get; set; }
 
         /// <summary>
         /// 
