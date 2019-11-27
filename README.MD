@@ -1,5 +1,5 @@
 ﻿
-Sitecore Commerce Engine UPS plugin (Sitecore Commerce 9 Initial Release)
+Sitecore Commerce Engine UPS plugin (Sitecore Experience Commerce 9.1)
 ======================================
 
 This plugin allows the user to integrate UPS as a Fulfillment Method for shipping. 
@@ -89,6 +89,18 @@ How to Install
     ]
   }
 }
+
+
+```
+
+Inside your corresponding json files for PlugIn.Habitat.CommerceAuthoring-1.0.0.json, PlugIn.Habitat.CommerceMinions-1.0.0.json and PlugIn.Habitat.CommerceShops-1.0.0.json
+ you will need to add the line below. I added mine after braintree entry
+
+ ```
+       {
+        "$type": "Sitecore.Commerce.Core.PolicySetPolicy, Sitecore.Commerce.Core",
+        "PolicySetId": "Entity-PolicySet-UpsPolicySet"
+      },
 
 
 ```
